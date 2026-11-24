@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # 发布版：明文源码（已移除封装层）
 CODE_VERSION = '20261117.181436'
-UPDATE_URL = 'https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/Py-Online/update_kishuto.json'
+UPDATE_URL = 'https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/pyonline/main/Py-Online/update_kishuto.json'
 
 # ======================================================================
 # 模块：yt

@@ -1,7 +1,7 @@
 {
   "spider": "https://gh-proxy.com/https://raw.githubusercontent.com/tao200672/pyonline/main/Kishuto_API/spider-tbox-20261123.jar;md5;0849170e6cb02b6096dd2bf3d736677b",
-  "logo": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/Kishuto_API/icon.gif",
-  "icon": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/Kishuto_API/icon.gif",
+  "logo": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/Kishuto_API/icon.png",
+  "icon": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/Kishuto_API/icon.png",
   "sites": [
     {
       "key": "豆瓣",

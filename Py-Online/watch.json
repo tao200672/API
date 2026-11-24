@@ -1,7 +1,7 @@
 {
   "spider": "",
-  "logo": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/Py-Online/icon.gif",
-  "icon": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/Py-Online/icon.gif",
+  "logo": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/Py-Online/icon.png",
+  "icon": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/Py-Online/icon.png",
   "sites": [
     {
       "key": "Kishuto",

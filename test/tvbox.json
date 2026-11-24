@@ -1,7 +1,7 @@
 {
   "spider": "https://gh-proxy.com/https://raw.githubusercontent.com/tao200672/pyonline/main/test/spider-20261117c.jar;md5;dacb25969d2e4fb9c8af056879b9f8d6",
-  "logo": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/test/icon.gif",
-  "icon": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/test/icon.gif",
+  "logo": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/test/icon.png",
+  "icon": "https://cdn.jsdelivr.net/gh/tao200672/pyonline@main/test/icon.png",
   "sites": [
     {
       "key": "agg4k",

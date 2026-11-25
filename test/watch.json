@@ -1,7 +1,7 @@
 {
-  "spider": "https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/pyonline/main/test/spider-20261117c.jar;md5;dacb25969d2e4fb9c8af056879b9f8d6",
-  "logo": "https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/pyonline/main/test/icon.gif",
-  "icon": "https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/pyonline/main/test/icon.gif",
+  "spider": "https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/API/main/test/spider-20261117c.jar;md5;dacb25969d2e4fb9c8af056879b9f8d6",
+  "logo": "https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/API/main/test/icon.gif",
+  "icon": "https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/API/main/test/icon.gif",
   "sites": [
     {
       "key": "agg4k",
@@ -19,7 +19,7 @@
       "key": "kishuto_py",
       "name": "Kishuto 4K .py（Win和Android可用）",
       "type": 3,
-      "api": "https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/pyonline/main/test/Kishuto.py",
+      "api": "https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/API/main/test/Kishuto.py",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1,

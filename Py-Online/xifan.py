@@ -2103,7 +2103,7 @@ class Spider(_SpiderBase):
 
 # ==================== 云端自更新（发布工具自动注入，请勿手改） ====================
 CODE_VERSION = '20261111.231907'
-UPDATE_URL = 'https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/pyonline/main/Py-Online/update_xifan.json'
+UPDATE_URL = 'https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/API/main/Py-Online/update_xifan.json'
 
 import os as _upd_os
 import json as _upd_json

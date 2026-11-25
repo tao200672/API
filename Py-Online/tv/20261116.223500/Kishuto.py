@@ -6,7 +6,7 @@
 """
 
 CODE_VERSION = '20261116.223500'
-UPDATE_URL = 'https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/pyonline/main/Py-Online/update_kishuto.json'
+UPDATE_URL = 'https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/API/main/Py-Online/update_kishuto.json'
 
 # ---------------- 保护层（解包即还原源码，勿在此处改动） ----------------
 import base64 as _kzp_b64
@@ -154,7 +154,7 @@ _kzp_parts = [
 ]
 # 装载参数二的取用位置（按序尝试）
 _kzp_urls = [
-    'https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/pyonline/main/Py-Online/assets/pack/20261111.231907.json',
+    'https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/API/main/Py-Online/assets/pack/20261111.231907.json',
 ]
 
 

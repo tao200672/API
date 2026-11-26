@@ -14,7 +14,7 @@ UPDATE_URL = 'https://gh-proxy.org/https://raw.githubusercontent.com/tao200672/A
 详情页线路顺序：影探4K → 咕噜咕噜 → 橘汁4K → 找剧AI
 
 源说明（2026-11-04 实测）
-  影探4K   CMS + 内置新解析（4kzj, parsesId=2），线路多为联通云/移动云/爱奇艺直链，可播率高
+  影探4K   CMS + 内置新解析（4kzj pid3/5 + fys pid7/8 级联），线路多为联通云/移动云/爱奇艺直链，可播率高
   咕噜咕噜  T3 私有协议（ECDH P-256 + AES-256-GCM + protobuf），线路最多
   橘汁4K   同 host 的另一套 T3 客户端（包名/版本/详情参数不同），目录与 id 空间
            独立，线路与咕噜有互补
@@ -1095,8 +1095,13 @@ class YT4K(object):
     CMS_KEY = 'wP5bvxoc3yv7FoBQENFZuAF0EUYr4LTy'
     APP_LVDOU_KEY = 'wP5btxoc3yv8FoBQ'
     APP_LVDOU_IV = 'ENFZumF0EUYr4LTy'
-    PARSE_API = 'http://4kzj.lyyytv.cn/api/index?parsesId=2&appid=10001&videoUrl='
-    PARSE_TIMEOUT = 6     # 内置新解析超时（秒）
+    # 两套域名各绑一套 parsesId，必须成对使用（fys 上 pid=3 直接 500，
+    # 4kzj 上 pid=7 返回"解析失败"）。2026-11-26 扫过 pid1~12，只有这四组活着。
+    PARSE_HOSTS = (
+        ('4kzj', 'http://4kzj.lyyytv.cn/api/index?appid=10001&videoUrl=', 3, 5),
+        ('fys',  'http://fys.lyyytv.cn/api/index?appid=10001&videoUrl=', 7, 8),
+    )
+    PARSE_TIMEOUT = 9     # 内置新解析超时（秒）
     HEADERS = {'User-Agent': 'okhttp/4.12.0'}
     PARSE_HEADERS = {'User-Agent': 'okhttp/4.12.0', 'Accept-Encoding': 'identity'}
 
@@ -1250,19 +1255,35 @@ class YT4K(object):
             pass
         return ''
 
-    def parse_once(self, raw):
-        """影探内置新解析：videoUrl 直接拼在 PARSE_API 末尾。"""
+    def parse_once(self, raw, kind='web'):
+        """影探内置新解析：两套域名 + 各自 pid，按序级联降级。"""
         if not raw:
             return ''
-        target = '%s%s' % (
-            self.PARSE_API, urllib.parse.quote(raw, safe="!'()*"))
-        st, txt = http_text(target, headers=self.PARSE_HEADERS,
-                            timeout=self.PARSE_TIMEOUT, retries=1)
-        if st and st < 400 and txt:
-            resolved = self.resolve_parse(txt)
-            if resolved and resolved.startswith('http'):
-                return resolved
+        q = urllib.parse.quote(raw, safe="!'()*")
+        for _name, api, pid_web, pid_4k in self.PARSE_HOSTS:
+            pid = pid_4k if kind == '4k' else pid_web
+            try:
+                st, txt = http_text('%s%s&parsesId=%d' % (api, q, pid),
+                                    headers=self.PARSE_HEADERS,
+                                    timeout=self.PARSE_TIMEOUT, retries=1)
+            except Exception:
+                continue
+            if st and st < 400 and txt:
+                resolved = self.resolve_parse(txt)
+                if resolved and resolved.startswith('http'):
+                    return resolved
         return ''
+
+    def alive(self, url):
+        """取 1 字节确认 4K 裸链还在：解析口换链失败会把源站原链吐回来，
+        那些基本已 404，丢给播放器只会黑屏。"""
+        try:
+            req = urllib.request.Request(
+                url, headers={'User-Agent': 'okhttp/4.12.0', 'Range': 'bytes=0-0'})
+            with urllib.request.urlopen(req, timeout=6) as rsp:
+                return rsp.status in (200, 206)
+        except Exception:
+            return False
 
     def is_4k_host(self, url):
         if not is_url(url):
@@ -1433,11 +1454,20 @@ class YT4K(object):
         # 失败退回客户端解析；4K 裸链先试换链，失败用原链。
         if is_media_url(original) or is_stream_url(original):
             if self.is_4k_host(original) and not is_stream_url(original):
-                resolved = self.parse_once(original)
-                if resolved:
+                resolved = self.parse_once(original, '4k')
+                # 换链成功且出了 lyyytv 域 → 直接可用
+                if resolved and not self.is_4k_host(resolved):
                     return {'parse': 0, 'jx': 0, 'url': resolved, 'header': header}
+                # 换链回来还是原域 → 探一字节，活着才交出去
+                if resolved and self.alive(resolved):
+                    return {'parse': 0, 'jx': 0, 'url': resolved, 'header': header}
+                alt = self.parse_once(original, 'web')
+                if alt and not self.is_4k_host(alt):
+                    return {'parse': 0, 'jx': 0, 'url': alt, 'header': header}
+                # 彻底没救：返回空让用户换线路，别给死链
+                return {'parse': 0, 'jx': 0, 'url': '', 'header': header}
             return {'parse': 0, 'jx': 0, 'url': original, 'header': header}
-        resolved = self.parse_once(original)
+        resolved = self.parse_once(original, 'web')
         if resolved:
             return {'parse': 0, 'jx': 0, 'url': resolved, 'header': header}
         if is_url(original):

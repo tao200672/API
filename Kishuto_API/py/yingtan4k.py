@@ -157,12 +157,17 @@ def _b64(value):
 
 HOST = 'http://cms.lyyytv.cn'
 CMS_KEY = 'wP5bvxoc3yv7FoBQENFZuAF0EUYr4LTy'
-# 影探内置新解析（原 fys 接口已下线）：parsesId=2，videoUrl 直接拼在末尾
-PARSE_API = 'http://4kzj.lyyytv.cn/api/index?parsesId=2&appid=10001&videoUrl='
+# 内置解析：两套域名各绑一套 parsesId，必须成对用，交叉调用一律失败
+# （fys 上 pid=3 直接 500；4kzj 上 pid=7 返回"解析失败"）。
+# 2026-11-26 全量扫过 pid1~12，只有这四组是活的，服务商隔段时间就改，按序级联降级。
+PARSE_HOSTS = (
+    ('4kzj', 'http://4kzj.lyyytv.cn/api/index?appid=10001&videoUrl=', 3, 5),
+    ('fys',  'http://fys.lyyytv.cn/api/index?appid=10001&videoUrl=', 7, 8),
+)
 DEC_PREFIX = 'https://baidu.con/'
 UA = 'okhttp/4.12.0'
 TIMEOUT = 20
-PARSE_TIMEOUT = 6
+PARSE_TIMEOUT = 9
 PLAY_TTL = 300
 
 # 筛选：只保留 nav 的 type_extend 里真实存在的键
@@ -663,30 +668,64 @@ class Spider(Spider):
             return {'parse': 0, 'url': cached, 'header': {'User-Agent': UA}}
 
         if _is_4k_source(raw):
-            # 4K 线路在源站是 404 的裸直链，先让内置新解析换链，失败再用原链
+            # 4K 线路在源站是 404 的裸直链，先让内置新解析换链。
+            # 换完还是 lyyytv 原域 = 没换成，探一字节；404 就试网页口，再不行返回空，
+            # 别把死链丢给播放器（那只会黑屏等超时）。
             tag = '4K'
-            url = self._parse_once(raw)
+            url = self._parse_once(raw, '4k')
+            if url:
+                host = (urllib.parse.urlparse(url).hostname or '').lower()
+                if _4K_HOST_RE.search(host) and not self._alive(url):
+                    alt = self._parse_once(raw, 'web')
+                    alt_host = (urllib.parse.urlparse(alt).hostname or '').lower() if alt else ''
+                    url = alt if (alt and not _4K_HOST_RE.search(alt_host)) else ''
             if not url:
                 tag = '4K-FAIL'
-                url = raw
+                url = ''
         elif _is_stream(raw):
             tag = 'STREAM'
             url = raw
         else:
             tag = 'WEB'
-            url = self._parse_once(raw) or (raw if _is_media(raw) else '')
+            url = self._parse_once(raw, 'web') or (raw if _is_media(raw) else '')
 
         if url:
             self._cache_set('play:' + raw, url, PLAY_TTL)
         print('[影探4K] %s -> %s' % (tag, url[:110]))
-        if not url and _http_url(raw):
+        # 4K 裸链已确认 404，交给客户端 jx 也变不出花来，直接返回空让用户换线路
+        if not url and _http_url(raw) and tag != '4K-FAIL':
             return {'parse': 1, 'jx': 1, 'url': raw, 'header': {'User-Agent': UA}}
         return {'parse': 0, 'url': url, 'header': {'User-Agent': UA}}
 
-    def _parse_once(self, raw):
-        target = '%s%s' % (PARSE_API, urllib.parse.quote(raw, safe="!'()*"))
-        body = self._get(target, PARSE_TIMEOUT)
-        return _resolve_parse(body)
+    def _alive(self, url):
+        """取 1 字节确认 4K 裸链还在。解析口换链失败时会把源站原链吐回来，
+        那些链接多半已经 404，直接丢给播放器只会黑屏。"""
+        try:
+            if self.session is None:
+                self.session = self._build_session()
+            rsp = self.session.get(url, headers={'User-Agent': UA, 'Range': 'bytes=0-0'},
+                                   timeout=6, stream=True)
+            code = rsp.status_code
+            try:
+                rsp.close()
+            except Exception:
+                pass
+            return code in (200, 206)
+        except Exception:
+            return False
+
+    def _parse_once(self, raw, kind='web'):
+        q = urllib.parse.quote(raw, safe="!'()*")
+        for _name, api, pid_web, pid_4k in PARSE_HOSTS:
+            pid = pid_4k if kind == '4k' else pid_web
+            try:
+                body = self._get('%s%s&parsesId=%d' % (api, q, pid), PARSE_TIMEOUT)
+            except Exception:
+                continue
+            out = _resolve_parse(body)
+            if out:
+                return out
+        return ''
 
     def localProxy(self, param):
         return None
